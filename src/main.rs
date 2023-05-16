@@ -31,6 +31,13 @@ enum Command {
 
 const DATA_PATH: &str = "todo_data.json";
 
+fn add_task(db: &mut TodoDb, name: String) {
+    db.add_task(Task {
+        name,
+        complete: false,
+    })
+}
+
 fn list_tasks(db: &TodoDb) {
     let task_list = db.task_list();
     if task_list.is_empty() {
@@ -55,12 +62,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut db = TodoDb::load(DATA_PATH)?;
     match args.command {
-        Command::Add { name } => {
-            db.add_task(Task {
-                name,
-                complete: false,
-            })
-        },
+        Command::Add { name } => add_task(&mut db, name),
         Command::List => list_tasks(&db),
         _ => todo!()
     }
