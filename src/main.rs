@@ -1,6 +1,7 @@
 mod todo_db;
 
 use clap::{command, Parser, Subcommand};
+use crate::todo_db::TodoDb;
 
 #[derive(Debug, Parser)]
 #[command()]
@@ -29,7 +30,14 @@ enum Command {
     },
 }
 
-fn main() {
+const DATA_PATH: &str = "todo_data.json";
+
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     println!("{:?}", args);
+
+    let db = TodoDb::load(DATA_PATH)?;
+    db.save(DATA_PATH)?;
+
+    Ok(())
 }

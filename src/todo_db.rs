@@ -1,3 +1,8 @@
+use std::fs::File;
+use std::io;
+use std::io::{BufReader, BufWriter};
+use std::path::Path;
+use anyhow::Context;
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -19,6 +24,32 @@ pub struct TodoDb {
 impl TodoDb {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    /// Load from file.
+    /// If the file does not exist, returns an empty TodoDb.
+    pub fn load(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+        match File::open(path) {
+            Ok(file) => {
+                let reader = BufReader::new(file);
+                let data: Data = serde_json::from_reader(reader)
+                    .context("Failed to read input file")?;
+                Ok(Self { data })
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                Ok(Self::new())
+            }
+            Err(e) => return Err(e.into()),
+        }
+    }
+
+    pub fn save(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+        let file = File::create(path)
+            .context("Failed to create output file")?;
+        let writer = BufWriter::new(file);
+        serde_json::to_writer(writer, &self.data)
+            .context("Failed to save to output file")?;
+        Ok(())
     }
 
     pub fn task_list(&self) -> &[Task] {
