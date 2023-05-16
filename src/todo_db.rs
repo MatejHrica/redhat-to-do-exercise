@@ -1,5 +1,7 @@
+use std::error::Error;
+use std::fmt::Display;
 use std::fs::File;
-use std::io;
+use std::{fmt, io};
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use anyhow::Context;
@@ -20,6 +22,21 @@ struct Data {
 pub struct TodoDb {
     data: Data,
 }
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum TaskError {
+    NoSuchTask,
+}
+
+impl Display for TaskError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::NoSuchTask => write!(f, "No such task"),
+        }
+    }
+}
+
+impl Error for TaskError {}
 
 impl TodoDb {
     pub fn new() -> Self {
@@ -56,6 +73,15 @@ impl TodoDb {
         &self.data.tasks
     }
 
+    pub fn mark_as_complete(&mut self, task_index: usize) -> Result<(), TaskError> {
+        if let Some(task) = self.data.tasks.get_mut(task_index) {
+            task.complete = true;
+            Ok(())
+        } else {
+            Err(TaskError::NoSuchTask)
+        }
+    }
+
     pub fn add_task(&mut self, task: Task) {
         self.data.tasks.push(task)
     }
@@ -81,5 +107,30 @@ mod tests {
         db.add_task(task.clone());
 
         assert_eq!(db.task_list(), &[task]);
+    }
+
+    #[test]
+    fn test_mark_task_complete_no_such_task() {
+        let mut db = TodoDb::new();
+        let result = db.mark_as_complete(1);
+
+        assert_eq!(result, Err(TaskError::NoSuchTask));
+    }
+
+    #[test]
+    fn test_mark_task_complete_task_exists() {
+        let mut db = TodoDb::new();
+        let task = Task {
+            name: String::from("Do a thing"),
+            complete: false,
+        };
+        let result_task = Task {complete: true, ..task.clone()};
+
+        db.add_task(task);
+
+        let result = db.mark_as_complete(0);
+        assert!(result.is_ok());
+
+        assert_eq!(db.task_list(), &[result_task]);
     }
 }
