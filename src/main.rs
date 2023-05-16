@@ -27,6 +27,8 @@ enum Command {
         /// The number of the task (can be obtained from list subcommand)
         task_number: u32,
     },
+    /// Delete all completed tasks
+    DeleteCompleted,
 }
 
 const DATA_PATH: &str = "todo_data.json";
@@ -75,6 +77,7 @@ fn main() -> anyhow::Result<()> {
         Command::Add { name } => add_task(&mut db, name),
         Command::List => list_tasks(&db),
         Command::Complete { task_number } => mark_as_complete(&mut db, task_number),
+        Command::DeleteCompleted => db.delete_all_completed_tasks(),
     }
 
     db.save(DATA_PATH)?;

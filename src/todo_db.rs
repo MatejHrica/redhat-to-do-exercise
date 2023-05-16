@@ -82,6 +82,10 @@ impl TodoDb {
         }
     }
 
+    pub fn delete_all_completed_tasks(&mut self) {
+        self.data.tasks.retain_mut(|task| { !task.complete });
+    }
+
     pub fn add_task(&mut self, task: Task) {
         self.data.tasks.push(task)
     }
@@ -124,7 +128,7 @@ mod tests {
             name: String::from("Do a thing"),
             complete: false,
         };
-        let result_task = Task {complete: true, ..task.clone()};
+        let result_task = Task { complete: true, ..task.clone() };
 
         db.add_task(task);
 
@@ -132,5 +136,21 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(db.task_list(), &[result_task]);
+    }
+
+    #[test]
+    fn test_delete_all_completed() {
+        let mut db = TodoDb::new();
+        let t1 = Task { name: String::from("t1"),complete: true};
+        let t2 = Task { name: String::from("t2"),complete: false};
+        let t3 = Task { name: String::from("t3"),complete: false};
+        let t4 = Task { name: String::from("t4"),complete: true};
+        db.add_task(t1);
+        db.add_task(t2.clone());
+        db.add_task(t3.clone());
+        db.add_task(t4);
+
+        db.delete_all_completed_tasks();
+        assert_eq!(db.task_list(), &[t2, t3]);
     }
 }
