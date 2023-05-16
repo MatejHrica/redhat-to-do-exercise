@@ -1,7 +1,7 @@
 mod todo_db;
 
 use clap::{command, Parser, Subcommand};
-use crate::todo_db::TodoDb;
+use crate::todo_db::{Task, TodoDb};
 
 #[derive(Debug, Parser)]
 #[command()]
@@ -34,9 +34,18 @@ const DATA_PATH: &str = "todo_data.json";
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    println!("{:?}", args);
 
-    let db = TodoDb::load(DATA_PATH)?;
+    let mut db = TodoDb::load(DATA_PATH)?;
+    match args.command {
+        Command::Add { name } => {
+            db.add_task(Task {
+                name,
+                complete: false,
+            })
+        },
+        _ => todo!()
+    }
+
     db.save(DATA_PATH)?;
 
     Ok(())
