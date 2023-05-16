@@ -13,7 +13,6 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-
     /// Add a new task
     Add {
         /// The name of the task
@@ -32,6 +31,25 @@ enum Command {
 
 const DATA_PATH: &str = "todo_data.json";
 
+fn list_tasks(db: &TodoDb) {
+    let task_list = db.task_list();
+    if task_list.is_empty() {
+        println!("There are no tasks!");
+        return;
+    }
+
+    let width = ((task_list.len()).ilog10() + 1) as usize;
+    for (i, task) in task_list.iter().enumerate() {
+        println!(
+            "{number:>width$}. [{complete_marker}] {task}",
+            number = i + 1,
+            width = width,
+            complete_marker = if task.complete { 'x' } else { ' ' },
+            task = task.name
+        );
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -43,6 +61,7 @@ fn main() -> anyhow::Result<()> {
                 complete: false,
             })
         },
+        Command::List => list_tasks(&db),
         _ => todo!()
     }
 
