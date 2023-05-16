@@ -1,7 +1,7 @@
 mod todo_db;
 
 use clap::{command, Parser, Subcommand};
-use crate::todo_db::{Task, TodoDb};
+use crate::todo_db::{Task, TaskError, TodoDb};
 
 #[derive(Debug, Parser)]
 #[command()]
@@ -57,6 +57,16 @@ fn list_tasks(db: &TodoDb) {
     }
 }
 
+fn mark_as_complete(db: &mut TodoDb, task_number: u32) {
+    let index = (task_number as usize)
+        .checked_sub(1)
+        .ok_or(TaskError::NoSuchTask);
+
+    if let Err(e) = index.map(|index| db.mark_as_complete(index)) {
+        println!("Cannot mark task as complete: {}", e);
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
@@ -64,7 +74,7 @@ fn main() -> anyhow::Result<()> {
     match args.command {
         Command::Add { name } => add_task(&mut db, name),
         Command::List => list_tasks(&db),
-        _ => todo!()
+        Command::Complete { task_number } => mark_as_complete(&mut db, task_number),
     }
 
     db.save(DATA_PATH)?;
